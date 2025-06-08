@@ -1,77 +1,62 @@
-# Global Cleantech Directory Chatbot
+GLOBAL-CLEAN-TECH-
+Empowering Sustainable Solutions Through Intelligent Conversations
 
-A modern, professional chatbot interface for the Global Cleantech Directory, built with React and Node.js.
+last-commit repo-top-language repo-language-count
+Built with the tools and technologies:
 
-## Features
+Express JSON Markdown npm Autoprefixer PostCSS .ENV
+JavaScript Nodemon React Webpack TypeScript Axios
 
-- Modern, responsive UI with smooth animations
-- Real-time chat interface
-- Backend API integration
-- Professional design with Tailwind CSS
-- TypeScript support
+Table of Contents
+Overview
+Getting Started
+Prerequisites
+Installation
+Usage
+Testing
+Overview
+The Global Cleantech Directory Chatbot is an interactive platform that connects users with sustainable technology solutions through a modern chatbot interface, enhancing user engagement and accessibility.
 
-## Prerequisites
+Why Global-Clean-Tech?
 
-- Node.js (v14 or higher)
-- npm (v6 or higher)
+This project aims to promote cleantech initiatives while providing a seamless user experience. The core features include:
 
-## Setup
+🌟 Interactive Chatbot Interface: Engages users with real-time communication for instant information retrieval.
+🎨 Responsive Design with Tailwind CSS: Ensures a cohesive and modern look across all devices.
+🔒 Type Safety with TypeScript: Enhances code quality and reduces errors through strict type-checking.
+⚙️ Optimized Build Process with Webpack: Streamlines development and boosts application performance.
+📊 Performance Monitoring: Captures key web vitals to help developers optimize user experience.
+🔗 Seamless Backend Integration: Efficiently handles HTTP requests and responses with Express.js.
+Getting Started
+Prerequisites
+This project requires the following dependencies:
 
-1. Clone the repository
-2. Install frontend dependencies:
-   ```bash
-   cd cleantech-chatbot
-   npm install
-   ```
+Programming Language: JavaScript
+Package Manager: Npm
+Installation
+Build Global-Clean-Tech- from the source and intsall dependencies:
 
-3. Install backend dependencies:
-   ```bash
-   cd backend
-   npm install
-   ```
+Clone the repository:
 
-## Running the Application
+❯ git clone https://github.com/karanthegodd/Global-Clean-Tech-
+Navigate to the project directory:
 
-1. Start the backend server:
-   ```bash
-   cd backend
-   npm run dev
-   ```
+❯ cd Global-Clean-Tech-
+Install the dependencies:
 
-2. In a new terminal, start the frontend development server:
-   ```bash
-   cd cleantech-chatbot
-   npm start
-   ```
+Using npm:
 
-3. Open your browser and navigate to `http://localhost:3000`
+❯ npm install
+Usage
+Run the project with:
 
-## Development
+Using npm:
 
-- Frontend runs on port 3000
-- Backend runs on port 5000
-- The application uses TypeScript for type safety
-- Tailwind CSS for styling
-- Framer Motion for animations
+npm start
+Testing
+Global-clean-tech- uses the {test_framework} test framework. Run the test suite with:
 
-## Project Structure
+Using npm:
 
-```
-cleantech-chatbot/
-├── src/
-│   ├── components/
-│   │   └── Chatbot.tsx
-│   ├── App.tsx
-│   └── index.tsx
-├── backend/
-│   └── server.js
-└── package.json
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request
+npm test
+⬆ Return
