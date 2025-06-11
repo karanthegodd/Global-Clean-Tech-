@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌱 Cleantech Assistant - Your Sustainable Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Chatbot Container */
+        .chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* Chat Toggle Button */
+        .chat-toggle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.4);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .chat-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(34, 197, 94, 0.4);
+        }
+
+        .chat-toggle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .chat-toggle:hover::before {
+            transform: translateX(100%);
+        }
+
+        .chat-icon {
+            width: 28px;
+            height: 28px;
+            fill: white;
+            transition: transform 0.3s;
+        }
+
+        .chat-toggle.active .chat-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Notification Badge */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Chat Window */
+        .chat-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 380px;
+            height: 550px;
+            background: rgb(186, 235, 143);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .chat-window.active {
+            display: flex;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Chat Header */
+        .chat-header {
+            background: linear-gradient(135deg, #00f7a4, #45a049);
+            color: white;
+            padding: 22px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .chat-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .assistant-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+            border: 2px solid rgba(255,255,255,0.3);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .assistant-info {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .assistant-name {
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 3px;
+            letter-spacing: 0.3px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .assistant-status {
+            font-size: 13px;
+            opacity: 0.95;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 400;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: breathe 2s infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Chat Messages */
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: linear-gradient(180deg, #f8f9fa 0%, #f1f8e9 100%);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm58-60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z' fill='%23e8f5e9' fill-opacity='0.3' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 2px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: messageSlide 0.3s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .bot-avatar {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .user-avatar {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .message-content {
+            flex: 1;
+            max-width: 280px;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .bot-message {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 6px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .bot-message:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border-bottom-right-radius: 6px;
+            margin-left: auto;
+            box-shadow: 0 2px 12px rgba(76, 175, 80, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .user-message:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            padding: 18px 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+        }
+
+        .quick-action {
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            color: #2c3e50;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .quick-action:hover {
+            background: #4CAF50;
+            color: white;
+            border-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+        
+        .quick-action:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Chat Input */
+        .chat-input {
+            padding: 16px 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+        }
+
+        .input-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .chat-textarea {
+            width: 100%;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            max-height: 120px;
+            min-height: 44px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            line-height: 1.5;
+            background: #f8f9fa;
+        }
+
+        .chat-textarea:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+            background: white;
+        }
+
+        .send-button {
+            width: 46px;
+            height: 46px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .send-button:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 5px rgba(76, 175, 80, 0.3);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .send-icon {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 12px 18px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 18px;
+            border-bottom-left-radius: 6px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            width: fit-content;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: typingBounce 1.8s infinite ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingBounce {
+            0%, 100% {
+                transform: translateY(0) scale(0.9);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-5px) scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        /* Welcome Message */
+        .welcome-message {
+            text-align: center;
+            padding: 24px 20px;
+            color: #2c3e50;
+            background: white;
+            border-radius: 14px;
+            margin: 10px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #e0e0e0;
+            animation: popIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            transform-origin: top center;
+        }
+        
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: translateY(10px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .welcome-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #4CAF50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .welcome-subtitle {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #546e7a;
+            max-width: 90%;
+            margin: 0 auto;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .chatbot-container {
+                bottom: 15px;
+                right: 15px;
+            }
+
+            .chat-window {
+                width: calc(100vw - 30px);
+                height: 80vh;
+                max-height: 600px;
+                bottom: 75px;
+                right: 0;
+                border-radius: 20px 20px 0 0;
+            }
+            
+            .chat-toggle {
+                width: 64px;
+                height: 64px;
+            }
+            
+            .welcome-message {
+                margin: 5px 0 10px;
+                padding: 18px 15px;
+            }
+            
+            .welcome-title {
+                font-size: 16px;
+            }
+            
+            .welcome-subtitle {
+                font-size: 13px;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.03);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <!-- Chat Toggle Button -->
+        <button class="chat-toggle" id="chatToggle">
+            <svg class="chat-icon" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 3.04 1.05 4.35L1 22l5.65-2.05C8.96 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.4 0-2.76-.3-4.03-.85L7 20l-1.15-.97C4.7 17.76 4 15.46 4 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8z"/>
+                <circle cx="9" cy="12" r="1"/>
+                <circle cx="12" cy="12" r="1"/>
+                <circle cx="15" cy="12" r="1"/>
+            </svg>
+            <div class="notification-badge" id="notificationBadge" style="display: none;">1</div>
+        </button>
+
+        <!-- Chat Window -->
+        <div class="chat-window" id="chatWindow">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="assistant-avatar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v-.07zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                    </svg>
+                </div>
+                <div class="assistant-info">
+                    <div class="assistant-name">Cleantech AI Assistant</div>
+                    <div class="assistant-status">
+                        <div class="status-dot"></div>
+                        Online - Ready to help
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message">
+                    <div class="welcome-title">Welcome to Global Cleantech Directory! 🌱</div>
+                    <div class="welcome-subtitle">I'm here to help you discover cleantech solutions, connect with innovative companies, and explore sustainable technologies worldwide.</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions" id="quickActions">
+                <button class="quick-action" onclick="sendQuickMessage('Find solar companies')">☀️ Solar Solutions</button>
+                <button class="quick-action" onclick="sendQuickMessage('Water technology companies')">💧 Water Tech</button>
+                <button class="quick-action" onclick="sendQuickMessage('Green infrastructure')">🏗️ Green Infrastructure</button>
+                <button class="quick-action" onclick="sendQuickMessage('How to list my company')">📝 List Company</button>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input">
+                <div class="input-container">
+                    <textarea 
+                        class="chat-textarea" 
+                        id="chatInput" 
+                        placeholder="Ask about cleantech solutions, companies, or listing your business..."
+                        rows="1"
+                    ></textarea>
+                </div>
+                <button class="send-button" id="sendButton" onclick="sendMessage()">
+                    <svg class="send-icon" viewBox="0 0 24 24">
+                        <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chat functionality
+        let isOpen = false;
+        let messageHistory = [];
+
+        // DOM elements
+        const chatToggle = document.getElementById('chatToggle');
+        const chatWindow = document.getElementById('chatWindow');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        const notificationBadge = document.getElementById('notificationBadge');
+        const quickActions = document.getElementById('quickActions');
+
+        // Toggle chat window
+        chatToggle.addEventListener('click', () => {
+            isOpen = !isOpen;
+            chatWindow.classList.toggle('active', isOpen);
+            chatToggle.classList.toggle('active', isOpen);
+            
+            if (isOpen) {
+                chatInput.focus();
+                notificationBadge.style.display = 'none';
+            }
+        });
+
+        // Auto-resize textarea
+        chatInput.addEventListener('input', () => {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = Math.min(chatInput.scrollHeight, 80) + 'px';
+        });
+
+        // Send message on Enter (but allow Shift+Enter for new lines)
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Send message function
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, 'user');
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+
+            // Hide quick actions after first message
+            if (messageHistory.length === 1) {
+                quickActions.style.display = 'none';
+            }
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Simulate bot response
+            setTimeout(() => {
+                hideTypingIndicator();
+                const response = generateBotResponse(message);
+                addMessage(response, 'bot');
+            }, 1500 + Math.random() * 1000);
+        }
+
+        // Quick message function
+        function sendQuickMessage(message) {
+            chatInput.value = message;
+            sendMessage();
+        }
+
+        // Add message to chat
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar ${sender === 'bot' ? 'bot-avatar' : 'user-avatar'}">
+                    ${sender === 'bot' ? '🤖' : '👤'}
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble ${sender === 'bot' ? 'bot-message' : 'user-message'}">
+                        ${text}
+                    </div>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            messageHistory.push({text, sender, time});
+
+            // Show notification if chat is closed and it's a bot message
+            if (!isOpen && sender === 'bot') {
+                notificationBadge.style.display = 'flex';
+            }
+        }
+
+        // Typing indicator
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <div class="message-avatar bot-avatar">🤖</div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // Generate bot responses
+        function generateBotResponse(userMessage) {
+            const message = userMessage.toLowerCase();
+            
+            if (message.includes('solar')) {
+                return "I can help you find solar technology companies! Our directory includes solar panel manufacturers, installation services, and innovative solar solutions from around the world. You can filter by region like North America, Europe, or Asia. Would you like me to guide you to specific solar categories?";
+            }
+            
+            if (message.includes('water')) {
+                return "Great! We have an extensive collection of water technology companies specializing in water purification, treatment systems, conservation solutions, and smart water management. These range from startups to established SMEs. Which specific water technology area interests you most?";
+            }
+            
+            if (message.includes('list') || message.includes('company') || message.includes('business')) {
+                return "Listing your cleantech company is easy! We offer a 3-month free trial with no credit card required. You'll get your own dedicated page to showcase your logo, videos, services, brochures, and track visitor engagement. Would you like me to walk you through the registration process?";
+            }
+            
+            if (message.includes('green infrastructure') || message.includes('infrastructure')) {
+                return "Our green infrastructure section features companies working on sustainable urban development, eco-friendly construction materials, smart city solutions, and renewable energy infrastructure. These companies are available for B2B and B2G partnerships globally. What type of infrastructure solutions are you looking for?";
+            }
+            
+            if (message.includes('partnership') || message.includes('collaborate')) {
+                return "The platform is designed to break down barriers for international collaboration! You can connect directly with companies through lead forms, explore B2B and B2G opportunities, and find partners across different regions. Our upcoming AI assistant will support multiple languages including English, French, Arabic, Spanish, and Farsi.";
+            }
+            
+            if (/hello|hi|hey|good morning|good afternoon/i.test(message)) {
+                return "Hello! Welcome to the Global Cleantech Directory. I'm here to help you discover cleantech solutions, connect with innovative companies worldwide, or assist with listing your own business. What would you like to explore today?";
+            }
+            
+            if (message.includes('help')) {
+                return "I'm here to help! I can assist you with:\n\n🔍 Finding cleantech companies by category and region\n🤝 Understanding partnership opportunities\n📝 Guiding you through company listing process\n🌍 Exploring international collaboration options\n\nWhat specific area would you like help with?";
+            }
+            
+            // Default response
+            return "That's an interesting question! As your cleantech AI assistant, I can help you explore our global directory of clean technology companies, understand listing opportunities, or find specific sustainable solutions. Could you tell me more about what you're looking for in the cleantech space?";
+        }
+
+        // Initialize with a welcome message after a short delay
+        setTimeout(() => {
+            addMessage("Hi there! 👋 I'm your AI assistant for the Global Cleantech Directory. I can help you discover sustainable technologies, find the right cleantech partners, or guide you through listing your own company. What brings you here today?", 'bot');
+        }, 1000);
+    </script>
+</body>
+</html>
