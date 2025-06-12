@@ -14,17 +14,70 @@ interface Message {
   fileName?: string;
 }
 
-const Chatbot: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
+const CATEGORY_TAGS = [
+  { icon: '🔆', label: 'Solar Solutions' },
+  { icon: '💧', label: 'Water Tech' },
+  { icon: '🏗️', label: 'Green Infrastructure' },
+  { icon: '📋', label: 'List Company' },
+];
+
+const BOT_AVATAR = (
+  <div style={{
+    width: 40,
+    height: 40,
+    borderRadius: '50%',
+    background: '#22c55e',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 8px rgba(34,197,94,0.10)',
+  }}>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="12" fill="#fff"/>
+      <ellipse cx="12" cy="15" rx="7" ry="5" fill="#B6F7C1"/>
+      <ellipse cx="12" cy="9" rx="6" ry="5" fill="#22c55e"/>
+      <ellipse cx="12" cy="9" rx="3.5" ry="3" fill="#fff"/>
+      <ellipse cx="10" cy="9" rx="0.7" ry="0.9" fill="#222"/>
+      <ellipse cx="14" cy="9" rx="0.7" ry="0.9" fill="#222"/>
+      <path d="M11 12 Q12 13 13 12" stroke="#222" strokeWidth="0.8" fill="none" strokeLinecap="round"/>
+    </svg>
+  </div>
+);
+
+// Message types
+interface WelcomeMessage {
+  id: number;
+  type: 'welcome';
+}
+interface BotMessage {
+  id: number;
+  type: 'bot';
+  text: string;
+  timestamp: Date;
+}
+interface UserMessage {
+  id: number;
+  type: 'user';
+  text: string;
+  timestamp: Date;
+}
+type ChatMessage = WelcomeMessage | BotMessage | UserMessage;
+
+interface ChatbotProps {
+  onBackToWelcome?: () => void;
+}
+
+const Chatbot: React.FC<ChatbotProps> = ({ onBackToWelcome }) => {
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { id: 1, type: 'welcome' },
     {
-      id: 1,
-      text: "Hello! I'm your Cleantech Directory assistant. How can I help you today?",
-      sender: 'bot',
+      id: 2,
+      type: 'bot',
+      text: "Hi there! 👋 I'm your AI assistant for the Global Cleantech Directory. I can help you discover sustainable technologies, find the right cleantech solutions, and connect with innovative companies.",
       timestamp: new Date(),
-      avatar: '/Global Cleantech Directory_logo.png'
     },
   ]);
-  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -38,17 +91,16 @@ const Chatbot: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
     // Add user message
-    const userMessage: Message = {
+    const userMessage: UserMessage = {
       id: messages.length + 1,
+      type: 'user',
       text: input,
-      sender: 'user',
       timestamp: new Date(),
-      avatar: 'https://via.placeholder.com/40/cccccc/ffffff?text=You'
     };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
@@ -59,22 +111,20 @@ const Chatbot: React.FC = () => {
         message: input,
       });
 
-      const botMessage: Message = {
+      const botMessage: BotMessage = {
         id: messages.length + 2,
+        type: 'bot',
         text: response.data.response,
-        sender: 'bot',
         timestamp: new Date(),
-        avatar: '/Global Cleantech Directory_logo.png'
       };
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
-      const errorMessage: Message = {
+      const errorMessage: BotMessage = {
         id: messages.length + 2,
+        type: 'bot',
         text: "I'm sorry, I'm having trouble connecting to the server. Please try again later.",
-        sender: 'bot',
         timestamp: new Date(),
-        avatar: '/Global Cleantech Directory_logo.png'
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -87,151 +137,197 @@ const Chatbot: React.FC = () => {
     // Add more specific functionality here later
   };
 
-  const handlePhotoIconClick = () => {
-    photoInputRef.current?.click();
+  const handleCategoryClick = (label: string) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: prev.length + 1,
+        type: 'user',
+        text: label,
+        timestamp: new Date(),
+      },
+      {
+        id: prev.length + 2,
+        type: 'bot',
+        text: `You selected "${label}". (This is a placeholder response.)`,
+        timestamp: new Date(),
+      },
+    ]);
   };
 
-  const handleAttachmentIconClick = () => {
-    attachmentInputRef.current?.click();
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      const selectedFile = files[0];
-      console.log('Selected file:', selectedFile);
-
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        const fileMessage: Message = {
-          id: messages.length + 1,
-          sender: 'user',
-          timestamp: new Date(),
-          avatar: 'https://via.placeholder.com/40/cccccc/ffffff?text=You'
-        };
-
-        if (selectedFile.type.startsWith('image/')) {
-          // Handle image file
-          fileMessage.imageUrl = e.target?.result as string;
-          fileMessage.text = `Image: ${selectedFile.name}`;
-        } else {
-          // Handle other file types
-          fileMessage.fileName = selectedFile.name;
-          fileMessage.text = `File: ${selectedFile.name}`;
-        }
-
-        setMessages(prev => [...prev, fileMessage]);
-      };
-
-      // Read the file as a data URL for images, or just process info for others
-      if (selectedFile.type.startsWith('image/')) {
-         reader.readAsDataURL(selectedFile);
-      } else {
-         reader.readAsText(selectedFile.slice(0, 1));
-      }
-
-      // Clear the file input so the same file can be selected again
-      if (event.target) {
-        event.target.value = '';
-      }
-    }
-  };
+  // Show back button if the first message is not the welcome message
+  const isWelcome = messages.length > 0 && messages[0].type === 'welcome';
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100 max-w-sm mx-auto rounded-lg shadow-lg overflow-hidden md:max-w-md lg:max-w-lg">
-      <header className="bg-green-600 text-white p-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ArrowLeftIcon className="h-6 w-6 cursor-pointer" />
-          <div className="flex items-center gap-3">
-            <img src="/Global Cleantech Directory_logo.png" alt="Bot Avatar" className="h-10 w-10 rounded-full" />
-            <div>
-              <h1 className="text-lg font-semibold">Global Cleantech Directory AI</h1>
-              <p className="text-xs opacity-90">Bot</p>
-            </div>
-          </div>
+    <div style={{
+      width: '100%',
+      minHeight: 500,
+      display: 'flex',
+      flexDirection: 'column',
+      background: '#fff',
+      borderRadius: 24,
+      overflow: 'hidden',
+      boxShadow: '0 8px 32px rgba(20, 93, 160, 0.10)',
+    }}>
+      {/* Header */}
+      <div style={{
+        background: '#22c55e',
+        padding: '20px 24px 16px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        position: 'relative',
+      }}>
+        {/* Back Button */}
+        {onBackToWelcome && !isWelcome && (
+          <button
+            onClick={onBackToWelcome}
+            style={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(255,255,255,0.7)',
+              border: 'none',
+              borderRadius: '50%',
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 10,
+              boxShadow: '0 1px 4px rgba(20,93,160,0.08)',
+            }}
+            aria-label="Back to welcome"
+          >
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+              <path d="M12.5 15L8 10.5L12.5 6" stroke="#22c55e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
+        <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: onBackToWelcome && !isWelcome ? 40 : 0 }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="12" fill="#fff"/>
+            <ellipse cx="12" cy="15" rx="7" ry="5" fill="#B6F7C1"/>
+            <ellipse cx="12" cy="9" rx="6" ry="5" fill="#22c55e"/>
+            <ellipse cx="12" cy="9" rx="3.5" ry="3" fill="#fff"/>
+            <ellipse cx="10" cy="9" rx="0.7" ry="0.9" fill="#222"/>
+            <ellipse cx="14" cy="9" rx="0.7" ry="0.9" fill="#222"/>
+            <path d="M11 12 Q12 13 13 12" stroke="#222" strokeWidth="0.8" fill="none" strokeLinecap="round"/>
+          </svg>
         </div>
-      </header>
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <AnimatePresence>
-            {messages.map((message) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className={`flex items-start gap-3 ${
-                  message.sender === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                {message.sender === 'bot' && (
-                  <img src={message.avatar} alt="Bot Avatar" className="h-10 w-10 rounded-full" />
-                )}
-                <div className={`flex flex-col max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg p-3 rounded-lg ${
-                  message.sender === 'user'
-                    ? 'bg-blue-500 text-white rounded-br-none'
-                    : 'bg-gray-200 text-gray-800 rounded-bl-none'
-                }`}>
-                  {message.imageUrl ? (
-                    <img src={message.imageUrl} alt="User Upload" className="max-w-full h-auto rounded" />
-                  ) : message.fileName ? (
-                    <p>📁 {message.fileName}</p>
-                  ) : (
-                    <p>{message.text}</p>
-                  )}
-                  <span className={`text-xs opacity-90 mt-1 ${
-                      message.sender === 'user' ? 'text-right' : 'text-left'
-                  }`}>
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+        <div style={{ color: '#fff', marginLeft: 8 }}>
+          <div style={{ fontWeight: 700, fontSize: 20, letterSpacing: 0.2 }}>Cleantech AI Assistant</div>
+          <div style={{ fontSize: 14, opacity: 0.95, marginTop: 2 }}>Online - Ready to help</div>
+        </div>
+      </div>
+      {/* Chat Area */}
+      <div style={{ flex: 1, padding: '0 0 0 0', background: '#fff', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        {messages.map((msg) => {
+          if (msg.type === 'welcome') {
+            return (
+              <div key={msg.id} style={{ textAlign: 'center', padding: '32px 24px 12px 24px' }}>
+                <div style={{ fontWeight: 700, fontSize: 22, color: '#22c55e', marginBottom: 8 }}>Welcome to Global Cleantech Directory!</div>
+                <div style={{ color: '#5C6F81', fontSize: 16, marginBottom: 20 }}>
+                  I'm here to help you discover cleantech solutions, connect with innovative companies, and explore sustainable technologies worldwide.
                 </div>
-                {message.sender === 'user' && (
-                  <img src={message.avatar} alt="User Avatar" className="h-10 w-10 rounded-full" />
-                )}
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          <div ref={messagesEndRef} />
-        </div>
-
-      <form onSubmit={handleSubmit} className="p-4 bg-white border-t flex items-center gap-2">
-        <PhotoIcon className="h-6 w-6 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" onClick={handlePhotoIconClick} />
-        <FaceSmileIcon className="h-6 w-6 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" onClick={() => handleIconClick('Emoji')} />
-        <PaperClipIcon className="h-6 w-6 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" onClick={handleAttachmentIconClick} />
-
-        <input
-          type="file"
-          accept="image/*"
-          ref={photoInputRef}
-          style={{ display: 'none' }}
-          onChange={handleFileSelect}
-        />
-        <input
-          type="file"
-          ref={attachmentInputRef}
-          style={{ display: 'none' }}
-          onChange={handleFileSelect}
-        />
-
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginBottom: 8 }}>
+                  {CATEGORY_TAGS.map((tag) => (
+                    <button
+                      key={tag.label}
+                      onClick={() => handleCategoryClick(tag.label)}
+                      style={{
+                        background: '#F0F6FA',
+                        color: '#145DA0',
+                        border: 'none',
+                        borderRadius: 20,
+                        padding: '8px 18px',
+                        fontWeight: 600,
+                        fontSize: 15,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        boxShadow: '0 1px 4px rgba(20,93,160,0.04)',
+                        cursor: 'pointer',
+                        marginBottom: 4,
+                      }}
+                    >
+                      <span>{tag.icon}</span> {tag.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+          if (msg.type === 'bot') {
+            return (
+              <div key={msg.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, margin: '12px 24px' }}>
+                {BOT_AVATAR}
+                <div style={{ background: '#F0F6FA', borderRadius: 16, padding: '14px 18px', color: '#222', fontSize: 15, maxWidth: 260, boxShadow: '0 1px 4px rgba(20,93,160,0.04)' }}>
+                  {msg.text}
+                </div>
+              </div>
+            );
+          }
+          if (msg.type === 'user') {
+            return (
+              <div key={msg.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, margin: '12px 24px', justifyContent: 'flex-end' }}>
+                <div style={{ background: '#22c55e', color: '#fff', borderRadius: 16, padding: '14px 18px', fontSize: 15, maxWidth: 260, boxShadow: '0 1px 4px rgba(34,197,94,0.10)' }}>
+                  {msg.text}
+                </div>
+                <div style={{ width: 40, height: 40 }} />
+              </div>
+            );
+          }
+          return null;
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+      {/* Input */}
+      <div style={{ padding: 18, background: '#fff', borderTop: '1px solid #F0F6FA', display: 'flex', alignItems: 'center', gap: 10 }}>
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a reply..."
-          className="flex-1 p-3 rounded-lg bg-gray-100 border-none focus:outline-none"
-          disabled={isLoading}
+          onChange={e => setInput(e.target.value)}
+          placeholder="Ask about cleantech solutions, companies, or listing your business"
+          style={{
+            flex: 1,
+            border: '1.5px solid #22c55e',
+            borderRadius: 14,
+            padding: '12px 16px',
+            fontSize: 15,
+            outline: 'none',
+            background: '#F8FFF8',
+            color: '#222',
+            boxShadow: '0 1px 4px rgba(34,197,94,0.04)',
+          }}
+          onKeyDown={e => { if (e.key === 'Enter') handleSend(e); }}
         />
         <button
-          type="submit"
-          className={`bg-blue-600 text-white p-3 rounded-full transition-colors ${
-            isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
-          }`}
-          disabled={isLoading}
+          onClick={handleSend}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: '50%',
+            background: '#22c55e',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(34,197,94,0.10)',
+            transition: 'background 0.2s',
+          }}
+          aria-label="Send"
         >
-          <PaperAirplaneIcon className="h-5 w-5 rotate-90" />
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z" fill="#fff" />
+          </svg>
         </button>
-      </form>
+      </div>
     </div>
   );
 };
